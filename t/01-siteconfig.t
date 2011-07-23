@@ -1,4 +1,5 @@
 #!/usr/bin/env perl
+use feature ':5.10';
 use Test::More;
 use lib 'lib';
 use Apache::SiteConfig;
@@ -15,6 +16,25 @@ is( $sect->to_string , <<'END' );
     ServerName localhost
 </VirtualHost>
 END
+
+my $sub_sect = $sect->add_section( 'Location' , '/' );
+ok( $sub_sect );
+
+
+say $sect->to_string;
+
+is( $sect->to_string , <<'END' );
+<VirtualHost *:80>
+    ServerName localhost
+    <Location />
+    </Location>
+
+</VirtualHost>
+END
+
+
+
+
 
 
 my $dt = Apache::SiteConfig::Directive->new( name => 'ServerName' , values => [ 'localhost' ] );
