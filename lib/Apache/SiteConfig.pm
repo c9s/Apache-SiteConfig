@@ -100,6 +100,17 @@ sub BUILD {
     $self->context( $root );
 }
 
+sub add_directive {
+    my ($self,$name,$values) = @_;
+    return $self->context->add_directive( $name , $values );
+}
+
+sub add_section {
+    my ($self,$name,$value) = @_;
+    return $self->add_section( $name, $value );
+}
+
+
 1;
 __END__
 
