@@ -34,26 +34,18 @@ END
 
 
 
-
-
-
 my $dt = Apache::SiteConfig::Directive->new( name => 'ServerName' , values => [ 'localhost' ] );
 is( $dt->name , 'ServerName' );
 is_deeply( $dt->values, ['localhost'] );
 is( $dt->to_string , 'ServerName localhost' );
 
-my $config = Apache::SiteConfig->new(
-    SiteId => 'foo',
-    VirtualHost => '*:80',
-    LogDir => '/var/log/apache2/sites',
-    ServerName => 'foo.com',
-    ServerAlias => 'test.com',
-    Port => ''
-);
-
+my $config = Apache::SiteConfig->new();
 ok( $config );
-ok( $config->options );
-ok( $config->options->{SiteId} );
+
+$config->context->add_section( 'Location' , '/' );
+$config->context->add_section( 'Location' , '/foo' );
+$config->context->add_section( 'Location' , '/bar' );
+say $config->context->to_string();
 
 
 done_testing;
