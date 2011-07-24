@@ -8,11 +8,13 @@ BEGIN {
     use_ok('Apache::SiteConfig::Root');
     use_ok('Apache::SiteConfig::Deploy');
     use_ok('Apache::SiteConfig::Template');
+    use_ok('Apache::SiteConfig::Statement');
+    use_ok('Apache::SiteConfig::Directive');
+    use_ok('Apache::SiteConfig::Section');
 
 }
 
 use Apache::SiteConfig;
-
 
 my $sect = Apache::SiteConfig::Section->new( name => 'VirtualHost' , value => '*:80' );
 ok( $sect );
