@@ -121,7 +121,7 @@ sub deploy {
         ServerName => $domain,
         ServerAlias => $domain_alias,
         DocumentRoot => $document_root,
-        AccessLog => $access_log , 
+        CustomLog => $access_log , 
         ErrorLog => $error_log 
     );
     my $config_content = $context->to_string;
