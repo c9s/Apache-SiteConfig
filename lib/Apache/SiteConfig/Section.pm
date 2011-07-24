@@ -14,6 +14,4 @@ sub to_string {
         "$indent</@{[ $self->name ]}>\n";
 }
 
-
-
 1;
