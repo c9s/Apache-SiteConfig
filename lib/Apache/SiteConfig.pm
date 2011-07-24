@@ -13,21 +13,32 @@ __END__
 
 =head1 NAME
 
-Apache::SiteConfig -
+Apache::SiteConfig - apache site deployment tool
 
 =head1 SYNOPSIS
 
-    use Apache::SiteConfig;
-    $config = Apache::SiteConfig->new(
-        SiteId => 'foo',
-        LogDir => 
-        Apache => {
-            ServerName =>  ...
-            ServerAlias =>  ...
-            ErrorLog =>  ...
-            CustomLog =>  ...
-        }
-    );
+    use Apache::SiteConfig::Deploy;
+
+    name 'projectA';
+
+    domain 'foo.com';
+
+    domain_alias 'foo.com';
+
+    source git => 'git@git.foo.com:projectA.git';
+
+    source hg  => 'http://.........';
+
+    # relative web document path of repository
+    webroot 'webroot/';
+
+    deploy;
+
+
+
+    # do deploy
+
+    $ perl siteA.PL
 
 
 =head1 DESCRIPTION

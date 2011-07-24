@@ -3,7 +3,7 @@ name 'Apache-SiteConfig';
 all_from 'lib/Apache/SiteConfig.pm';
 
 # requires '';
-
+readme_markdown_from 'lib/Apache/SiteConfig.pm';
 tests 't/*.t';
 author_tests 'xt';
 
