@@ -1,5 +1,6 @@
 package Apache::SiteConfig::Directive;
 use Moose;
+use Apache::SiteConfig::Statement;
 
 extends 'Apache::SiteConfig::Statement';
 

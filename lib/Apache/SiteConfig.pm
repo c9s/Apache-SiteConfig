@@ -2,6 +2,10 @@ package Apache::SiteConfig;
 use strict;
 use warnings;
 our $VERSION = '0.01';
+use Apache::SiteConfig::Statement;
+use Apache::SiteConfig::Section;
+use Apache::SiteConfig::Directive;
+use Apache::SiteConfig::Root;
 
 
 1;
