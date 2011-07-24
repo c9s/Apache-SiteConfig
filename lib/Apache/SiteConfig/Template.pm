@@ -2,9 +2,7 @@ package Apache::SiteConfig::Template;
 use warnings;
 use strict;
 use Moose;
-
-
-
+use Apache::SiteConfig;
 
 sub new_context {
     return Apache::SiteConfig::Root->new;

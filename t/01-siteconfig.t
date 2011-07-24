@@ -2,7 +2,17 @@
 use feature ':5.10';
 use Test::More;
 use lib 'lib';
+
+BEGIN {
+    use_ok('Apache::SiteConfig');
+    use_ok('Apache::SiteConfig::Root');
+    use_ok('Apache::SiteConfig::Deploy');
+    use_ok('Apache::SiteConfig::Template');
+
+}
+
 use Apache::SiteConfig;
+
 
 my $sect = Apache::SiteConfig::Section->new( name => 'VirtualHost' , value => '*:80' );
 ok( $sect );
