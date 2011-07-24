@@ -113,7 +113,7 @@ sub deploy {
     my $document_root = File::Spec->join( $site_dir , $args{webroot} );
     mkpath [ $document_root ];
 
-    my $log_dir = File::Spec->join( $args{sites_dir} , $args{name} , 'apache2' , 'logs' );
+    my $log_dir = File::Spec->join( $sites_dir , $args{name} , 'apache2' , 'logs' );
     my $access_log = File::Spec->join( $log_dir , 'access.log' );
     my $error_log = File::Spec->join( $log_dir , 'error.log' );
 

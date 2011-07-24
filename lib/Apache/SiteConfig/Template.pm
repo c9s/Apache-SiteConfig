@@ -31,11 +31,9 @@ sub build {
     $doc_root->add_directive( 'Order' , 'allow,deny' );
     $doc_root->add_directive( 'Allow' , 'from all' );
 
-    $root->add_directive( 'LogLevel'  , 'info' );
-    $root->add_directive( 'CustomLog' , [ $args{CustomLog} , 'combine' ] ) if $args{CustomLog};
-    $root->add_directive( 'ErrorLog' , $args{ErrorLog} ) if $args{ErrorLog};
-
-
+    $vir->add_directive( 'LogLevel'  , 'info' );
+    $vir->add_directive( 'CustomLog' , [ $args{CustomLog} , 'combine' ] ) if $args{CustomLog};
+    $vir->add_directive( 'ErrorLog' , $args{ErrorLog} ) if $args{ErrorLog};
     return $root;
 }
 
