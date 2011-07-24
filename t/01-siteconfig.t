@@ -20,9 +20,6 @@ END
 my $sub_sect = $sect->add_section( 'Location' , '/' );
 ok( $sub_sect );
 
-
-say $sect->to_string;
-
 is( $sect->to_string , <<'END' );
 <VirtualHost *:80>
     ServerName localhost
@@ -31,7 +28,6 @@ is( $sect->to_string , <<'END' );
 
 </VirtualHost>
 END
-
 
 
 my $dt = Apache::SiteConfig::Directive->new( name => 'ServerName' , values => [ 'localhost' ] );
