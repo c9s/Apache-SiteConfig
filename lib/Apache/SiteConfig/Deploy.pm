@@ -15,13 +15,18 @@ our $Single;
 
 # has tasks => ( is => 'rw' , default => sub { +{  } } );
 
+
+END {
+    $Single->execute_task( @ARGV );
+}
+
 sub import {
     my ($class) = @_;
     $Single = $class->new;
     $Single->{args} = {};
 
     no strict 'refs';
-    for my $key ( qw(name domain domain_alias webroot source) ) {
+    for my $key ( qw(name domain domain_alias webroot source task) ) {
         *{ 'main::' . $key } = sub { 
             ${ $class .'::'}{ $key }->( $Single , @_ );
         };
@@ -31,7 +36,18 @@ sub import {
     return 1;
 }
 
+
 sub new {  bless {} , shift; }
+
+sub execute_task {
+    my ($self,$task_name,@args) = @_;
+    my $task = $self->{tasks}->{ $task_name };
+    if ( $task ) {
+        $task->( $self , @args );
+    } else {
+        print "Task $task_name not found.\n";
+    }
+}
 
 sub name ($) { 
     my $self = shift;
@@ -48,7 +64,6 @@ sub domain_alias  {
     $self->{args}->{domain_alias} = $_[0]; 
 }
 
-
 sub source  { 
     my ($self,$type,$uri) = @_;
     $self->{args}->{ $type } = $uri;
@@ -60,8 +75,8 @@ sub webroot {
 }
 
 sub task ($&) {
-    my ($self,$type,$closure) = @_;
-    # $Single->tasks->{$type} = $closure;
+    my ($self,$name,$closure) = @_;
+    $self->{tasks}->{ $name } = $closure;
 }
 
 
