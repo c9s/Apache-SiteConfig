@@ -97,15 +97,17 @@ sub deploy {
     mkpath [ $sites_dir ] unless -e $sites_dir;
 
     my $site_dir = File::Spec->join( $sites_dir , $args{name} );
-    mkpath [ $site_dir ] unless -e $site_dir ;
 
-    if( $args{git} ) {
-        say "Cloning git repository from $args{git}";
-        system("git clone $args{git} $site_dir") == 0 or die($?);
-    }
-    elsif( $args{hg} ) {
-        say "Cloning hg repository from $args{hg}";
-        system("hg clone $args{hg} $site_dir") == 0 or die($?);
+    unless ( -e $site_dir ) {
+        mkpath [ $site_dir ] unless -e $site_dir ;
+        if( $args{git} ) {
+            say "Cloning git repository from $args{git}";
+            system("git clone $args{git} $site_dir") == 0 or die($?);
+        }
+        elsif( $args{hg} ) {
+            say "Cloning hg repository from $args{hg}";
+            system("hg clone $args{hg} $site_dir") == 0 or die($?);
+        }
     }
 
     my $document_root = File::Spec->join( $site_dir , $args{webroot} );
