@@ -16,7 +16,7 @@ our $Single;
 
 
 END {
-    $Single->execute_task( @ARGV );
+    $Single->execute_task( @ARGV ) if @ARGV;
 }
 
 sub import {
@@ -24,8 +24,9 @@ sub import {
     $Single = $class->new;
     $Single->{args} = {};
 
+    # setup accessors to main::
     no strict 'refs';
-    for my $key ( qw(name domain domain_alias webroot source task) ) {
+    for my $key ( qw(name domain domain_alias webroot source deploy task) ) {
         *{ 'main::' . $key } = sub { 
             ${ $class .'::'}{ $key }->( $Single , @_ );
         };
@@ -81,9 +82,9 @@ sub task ($&) {
 
 
 
-
 sub deploy {
-    my ($self,%args) = @_;
+    my ($self) = @_;
+    my %args = %{ $self->{args} };
 
     
 #     for( $self->required ) {
