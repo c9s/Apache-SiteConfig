@@ -13,14 +13,14 @@ my $context = $deploy->deploy(
     name         => 'foo',
     domain       => 'foo.com',
     domain_alias => 'bar.com',
-    sites_dir => 'testing_root',
+    sites_dir    => 'testing_root',
+    git          => 'git://github.com/c9s/c9s.github.com.git',
 );
 # my $context = $template->build( );
 say $context->to_string;
 
-
 ok( -e 'testing_root/foo' );
-rmtree 'testing_root';
+# rmtree 'testing_root';
 
 
 done_testing;
