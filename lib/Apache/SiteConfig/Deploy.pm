@@ -5,72 +5,92 @@ use Moose;
 use File::Spec;
 use File::Path qw(mkpath rmtree);
 
-has dirs => ( is => 'rw' );
-
-
-sub new_context {
-    return Apache::SiteConfig::Root->new;
-}
-
 sub required {
-    qw(site_id);
+    qw(name);
 }
 
-sub build {
+sub deploy {
     my ($self,%args) = @_;
-    my $args = \%args;
 
     for( $self->required ) {
-        die "Key $_ is required" unless $args{$_};
+        die "Key $_ is required." unless $args{$_};
     }
 
-    my $init = $args{init};
-    my $root = $self->new_context;
+    my $domain = $args{domain};
+    my $domain_alias = $args{domain_alias};
 
-    my $site_dir = $args->{site_dir} || File::Spec->join( '/var/sites' );
-    mkpath [ $site_dir ] if $init;
+    my $sites_dir = $args{sites_dir} || File::Spec->join( '/var/sites' );
+    mkpath [ $sites_dir ];
 
-    my $document_root = $args->{DocumentRoot} || File::Spec->join( $args->{site_dir} , $args->{site_id} , $args->{site_webpath} );
-    mkpath [ $document_root ] if $init;
+    my $document_root = File::Spec->join( $sites_dir , $args{name} , $args{webroot} );
+    mkpath [ $document_root ];
 
-    my $log_dir = File::Spec->join( $args->{site_dir} , $args->{site_id} , 'apache2' , 'logs' );
+    my $log_dir = File::Spec->join( $args{sites_dir} , $args{name} , 'apache2' , 'logs' );
     my $access_log = File::Spec->join( $log_dir , 'access.log' );
     my $error_log = File::Spec->join( $log_dir , 'error.log' );
 
 
-
-
-    my $vir = $root->add_section( 'VirtualHost' , '*:80' );
-    $vir->add_directive( 'DocumentRoot' , $document_root );
-
-    for( grep { $args->{$_} } qw(ServerName ServerAlias)) {
-        $vir->add_directive( $_ , $args->{$_} );
-    }
-
-    my $root_dir = $vir->add_section('Directory' , '/');
-    $root_dir->add_directive( 'Options' , 'FollowSymLinks' );
-    $root_dir->add_directive( 'AllowOverride' , 'None' );
-
-    my $doc_root = $vir->add_section('Directory', $document_root );
-    $doc_root->add_directive( 'Options' , 'Indexes FollowSymLinks MultiViews' );
-    $doc_root->add_directive( 'AllowOverride' , 'None' );
-    $doc_root->add_directive( 'Order' , 'allow,deny' );
-    $doc_root->add_directive( 'Allow' , 'from all' );
-
-    return $root;
+    # default template
+    my $template = new Apache::SiteConfig::Template;
+    my $context = $template->build( 
+        ServerName => $domain,
+        ServerAlias => $domain_alias,
+        DocumentRoot => $document_root,
+        AccessLog => $access_log , 
+        ErrorLog => $error_log 
+    );
+    return $context;
 }
-
 
 
 1;
 __END__
 
+=head1 NAME
+
+Apache::SiteConfig::Deploy
+
+=head1 SYNOPSIS
+
+    use Apache::SiteConfig::Deploy;
+
+    name   'projectA';
+
+    domain 'foo.com';
+
+    git  'git@git.foo.com:projectA.git';
+
+    hg   'http://.........';
+
+    # relative web document path of repository
+    webroot 'webroot/';
+
+    prepare {
+
+    };
+
+    after {
+
+    };
+
+    task deploy => sub {
+
+    };
+
+    task dist => sub {
+
+    };
+
+
+
+
 
     Deploy->new( 
-        site_id => 'projectA',
-        site_dir => '/var/sites',  # optional
-        site_git => 'git@foo.com:projectA.git',
-        site_domain => 'foo.com',
-        site_web => 'webroot/',
+        name => 'projectA',
+        sites_dir => '/var/sites',  # optional
+        git => 'git@foo.com:projectA.git',
+        domain => 'foo.com',
+        webroot => 'webroot/',
     );
 
+=cut

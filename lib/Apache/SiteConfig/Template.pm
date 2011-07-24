@@ -6,6 +6,32 @@ use Moose;
 
 
 
+sub new_context {
+    return Apache::SiteConfig::Root->new;
+}
+
+sub build {
+    my ($self,%args) = @_;
+
+    my $args = \%args;
+    my $root = $self->new_context;
+    my $vir = $root->add_section( 'VirtualHost' , '*:80' );
+
+    for( grep { $args->{$_} } qw(ServerName ServerAlias DocumentRoot)) {
+        $vir->add_directive( $_ , $args{$_} );
+    }
+
+    my $root_dir = $vir->add_section('Directory' , '/');
+    $root_dir->add_directive( 'Options' , 'FollowSymLinks' );
+    $root_dir->add_directive( 'AllowOverride' , 'None' );
+
+    my $doc_root = $vir->add_section('Directory', $args{DocumentRoot} );
+    $doc_root->add_directive( 'Options' , 'Indexes FollowSymLinks MultiViews' );
+    $doc_root->add_directive( 'AllowOverride' , 'None' );
+    $doc_root->add_directive( 'Order' , 'allow,deny' );
+    $doc_root->add_directive( 'Allow' , 'from all' );
+    return $root;
+}
 
 1;
 __END__
