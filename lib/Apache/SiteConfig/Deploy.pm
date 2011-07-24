@@ -71,9 +71,10 @@ sub task ($&) {
 sub deploy {
     my ($self,%args) = @_;
 
-    for( $self->required ) {
-        die "Key $_ is required." unless $args{$_};
-    }
+    
+#     for( $self->required ) {
+#         die "Key $_ is required." unless $args{$_};
+#     }
 
     my $domain = $args{domain};
     my $domain_alias = $args{domain_alias};

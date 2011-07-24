@@ -1,20 +1,3 @@
-package Apache::SiteConfig::Statement;
-use Moose;
-has parent => ( is => 'rw' );
-
-sub get_level {
-    my ($self) = @_;
-    my $cnt = 0;
-    my $p = $self->parent;
-    $cnt++ if $p;
-    while( $p && $p->parent ) {
-        $p = $p->parent;
-        $cnt++;
-    }
-
-    return $cnt;
-}
-
 package Apache::SiteConfig::Directive;
 use Moose;
 
@@ -87,23 +70,7 @@ package Apache::SiteConfig;
 use strict;
 use warnings;
 our $VERSION = '0.01';
-use Moose;
 
-has options => ( is => 'rw' );
-
-sub BUILD {
-    my $self = shift;
-    my $args = shift;
-    $self->options( $args );
-    my $root = Apache::SiteConfig::Root->new;
-    $self->context( $root );
-}
-
-sub build {
-    my ($self,$template,%args) = @_;
-    my $context = $template->new( %args );
-    return $context;
-}
 
 1;
 __END__
