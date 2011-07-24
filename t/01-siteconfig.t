@@ -47,5 +47,4 @@ $config->context->add_section( 'Location' , '/foo' );
 $config->context->add_section( 'Location' , '/bar' );
 ok( $config->context->to_string() );
 
-
 done_testing;

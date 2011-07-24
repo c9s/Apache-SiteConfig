@@ -39,6 +39,7 @@ has statements => ( is => 'rw' , isa => 'ArrayRef' , default => sub { [ ] } );
 
 sub add_directive {
     my ($self,$name,$values) = @_;
+    $values = ref($values) ? $values : [ $values ];
     my $dt = Apache::SiteConfig::Directive->new( 
         name => $name,
         values => $values,
@@ -90,8 +91,6 @@ use Moose;
 
 has options => ( is => 'rw' );
 
-has context => ( is => 'rw' );
-
 sub BUILD {
     my $self = shift;
     my $args = shift;
@@ -100,19 +99,11 @@ sub BUILD {
     $self->context( $root );
 }
 
-sub add_directive {
-    my ($self,$name,$values) = @_;
-    return $self->context->add_directive( $name , $values );
+sub build {
+    my ($self,$template,%args) = @_;
+    my $context = $template->new( %args );
+    return $context;
 }
-
-sub add_section {
-    my ($self,$name,$value) = @_;
-    return $self->add_section( $name, $value );
-}
-
-
-
-
 
 1;
 __END__
