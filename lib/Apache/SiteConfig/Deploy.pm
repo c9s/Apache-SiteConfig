@@ -85,7 +85,6 @@ sub task ($&) {
 sub deploy {
     my ($self) = @_;
     my %args = %{ $self->{args} };
-
     
 #     for( $self->required ) {
 #         die "Key $_ is required." unless $args{$_};
@@ -101,10 +100,12 @@ sub deploy {
     mkpath [ $site_dir ] unless -e $site_dir ;
 
     if( $args{git} ) {
-        system("git clone $args{git} $site_dir");
+        say "Cloning git repository from $args{git}";
+        system("git clone $args{git} $site_dir") == 0 or die($?);
     }
     elsif( $args{hg} ) {
-        system("hg clone $args{hg} $site_dir");
+        say "Cloning hg repository from $args{hg}";
+        system("hg clone $args{hg} $site_dir") == 0 or die($?);
     }
 
     my $document_root = File::Spec->join( $site_dir , $args{webroot} );
