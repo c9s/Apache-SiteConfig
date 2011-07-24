@@ -1,5 +1,7 @@
 package Apache::SiteConfig::Root;
 use Moose;
+use Apache::SiteConfig::Section;
+use Apache::SiteConfig::Directive;
 extends 'Apache::SiteConfig::Statement';
 
 has statements => ( is => 'rw' , isa => 'ArrayRef' , default => sub { [ ] } );
