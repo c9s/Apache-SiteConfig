@@ -1,13 +1,72 @@
 package Apache::SiteConfig::Deploy;
+use feature ':5.10';
 use warnings;
 use strict;
-use Moose;
 use File::Spec;
 use File::Path qw(mkpath rmtree);
+use Apache::SiteConfig::Template;
 
-sub required {
-    qw(name);
+
+# require Exporter;
+# our @ISA = qw(Exporter);
+# our @EXPORT = qw(name domain domain_alias source webroot task);
+
+our $Single;
+
+# has tasks => ( is => 'rw' , default => sub { +{  } } );
+
+sub import {
+    my ($class) = @_;
+    $Single = $class->new;
+    $Single->{args} = {};
+
+    no strict 'refs';
+    for my $key ( qw(name domain domain_alias webroot source) ) {
+        *{ 'main::' . $key } = sub { 
+            ${ $class .'::'}{ $key }->( $Single , @_ );
+        };
+    }
+
+    # Exporter->import( @_ );
+    return 1;
 }
+
+sub new {  bless {} , shift; }
+
+sub name ($) { 
+    my $self = shift;
+    $self->{args}->{name} = $_[0];
+}
+
+sub domain { 
+    my $self = shift;
+    $self->{args}->{domain} = $_[0]; 
+}
+
+sub domain_alias  { 
+    my $self = shift;
+    $self->{args}->{domain_alias} = $_[0]; 
+}
+
+
+sub source  { 
+    my ($self,$type,$uri) = @_;
+    $self->{args}->{ $type } = $uri;
+}
+
+sub webroot {
+    my ($self,$path) = @_;
+    $self->{args}->{webroot} = $path;
+}
+
+sub task ($&) {
+    my ($self,$type,$closure) = @_;
+    # $Single->tasks->{$type} = $closure;
+}
+
+
+
+
 
 sub deploy {
     my ($self,%args) = @_;
@@ -40,7 +99,7 @@ sub deploy {
     my $error_log = File::Spec->join( $log_dir , 'error.log' );
 
     # Default template
-    my $template = new Apache::SiteConfig::Template;  # apache site config template
+    my $template = Apache::SiteConfig::Template->new;  # apache site config template
     my $context = $template->build( 
         ServerName => $domain,
         ServerAlias => $domain_alias,
@@ -75,7 +134,7 @@ sub deploy {
         my $config_file = File::Spec->join(  'apache2' , $args{name} . '.conf' );  # apache config
         open my $fh , ">", $config_file;
         print $fh $config_content;
-        close my $fh;
+        close $fh;
     }
 
 }
@@ -96,20 +155,13 @@ Apache::SiteConfig::Deploy
 
     domain 'foo.com';
 
+    domain_alias 'foo.com';
 
     source git => 'git@git.foo.com:projectA.git';
     source hg  => 'http://.........';
 
     # relative web document path of repository
     webroot 'webroot/';
-
-    prepare {
-
-    };
-
-    after {
-
-    };
 
     task deploy => sub {
 
@@ -118,8 +170,6 @@ Apache::SiteConfig::Deploy
     task dist => sub {
 
     };
-
-
 
 
 
