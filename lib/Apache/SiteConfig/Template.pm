@@ -3,6 +3,8 @@ use warnings;
 use strict;
 use Moose;
 use Apache::SiteConfig;
+use Apache::SiteConfig::Root;
+
 
 sub new_context {
     return Apache::SiteConfig::Root->new;
