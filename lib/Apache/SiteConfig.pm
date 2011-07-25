@@ -13,7 +13,7 @@ __END__
 
 =head1 NAME
 
-Apache::SiteConfig - apache site deployment tool
+Apache::SiteConfig - Apache site deployment tool
 
 =head1 SYNOPSIS
 
@@ -21,29 +21,37 @@ Apache::SiteConfig - apache site deployment tool
 
     name 'projectA';
 
+    su 'www-data';
+
     domain 'foo.com';
 
     domain_alias 'foo.com';
 
-    source git => 'git@git.foo.com:projectA.git';
+    source git => 'git@git.foo.com:projectA.git',
+           branch => 'master';
 
     source hg  => 'http://.........';
 
     # relative web document path of repository
     webroot 'webroot/';
 
-    deploy;
 
+Do deploy
 
+    $ perl siteA deploy
 
-    # do deploy
+Do update
+    
+    $ perl siteA update
 
-    $ perl siteA.PL
+Clean up
+
+    $ perl siteA clean
 
 
 =head1 DESCRIPTION
 
-Apache::SiteConfig is
+Apache::SiteConfig is a simple tool for apache website deployment.
 
 =head1 AUTHOR
 

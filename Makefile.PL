@@ -2,7 +2,8 @@ use inc::Module::Install;
 name 'Apache-SiteConfig';
 all_from 'lib/Apache/SiteConfig.pm';
 
-# requires '';
+requires 'Moose';
+
 readme_markdown_from 'lib/Apache/SiteConfig.pm';
 tests 't/*.t';
 author_tests 'xt';
