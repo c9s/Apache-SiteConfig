@@ -103,10 +103,10 @@ sub preprocess_meta {
     return $args;
 }
 
-
 sub prepare_paths {
     my ($self,$args) = @_;
     for my $path ( qw(sites_dir site_dir log_dir document_root) ) {
+        next unless $args->{ $path };
         mkpath [ $args->{ $path } ] unless -e $args->{ $path };
     }
 }
@@ -123,64 +123,50 @@ sub deploy {
     my $args = $self->preprocess_meta;
     my %args = %$args;
 
-
     $self->prepare_paths( $args );
 
+    SKIP_SOURCE_CLONE:
+    if( $args->{git} ) {
+        last SKIP_SOURCE_CLONE if -e File::Spec->join( $args->{site_dir} , '.git' );
 
-
-
-    my $domain = $args{domain};
-    my $domain_alias = $args{domain_alias};
-    my $sites_dir = $args{sites_dir} || File::Spec->join( '/var/sites' );
-    my $site_dir = File::Spec->join( $sites_dir , $args{name} );
-
-    unless ( -e $site_dir ) {
-        if( $args{git} ) {
-            say "Cloning git repository from $args{git} to $site_dir";
-            system("git clone $args{git} $site_dir") == 0 or die($?);
-        }
-        elsif( $args{hg} ) {
-            say "Cloning hg repository from $args{hg} to $site_dir";
-            system("hg clone $args{hg} $site_dir") == 0 or die($?);
-        }
+        say "Cloning git repository from $args->{git} to $args->{site_dir}";
+        system("git clone $args->{git} $args->{site_dir}") == 0 or die($?);
     }
+    elsif( $args->{hg} ) {
+        last SKIP_SOURCE_CLONE if -e File::Spec->join( $args->{site_dir} , '.git' );
 
-    my $document_root = File::Spec->join( $site_dir , $args{webroot} );
-    mkpath [ $document_root ];
-
-    my $log_dir = File::Spec->join( $sites_dir , $args{name} , 'apache2' , 'logs' );
-    mkpath [ $log_dir ];
-
-    my $access_log = File::Spec->join( $log_dir , 'access.log' );
-    my $error_log = File::Spec->join( $log_dir , 'error.log' );
-
+        say "Cloning hg repository from $args->{hg} to $args->{site_dir}";
+        system("hg clone $args->{hg} $args->{site_dir}") == 0 or die($?);
+    }
 
     # Default template
     my $template = Apache::SiteConfig::Template->new;  # apache site config template
     my $context = $template->build( 
-        ServerName => $domain,
-        ServerAlias => $domain_alias,
-        DocumentRoot => $document_root,
-        CustomLog => $access_log , 
-        ErrorLog => $error_log 
+        ServerName => $args->{domain},
+        ServerAlias => $args->{domain_alias},
+        DocumentRoot => $args->{document_root},
+        CustomLog => $args->{access_log} , 
+        ErrorLog => $args->{error_log} 
     );
     my $config_content = $context->to_string;
 
     # get site config directory
     my $apache_dir_debian = '/etc/apache2/sites-available';
     if( -e $apache_dir_debian ) {
-        my $config_file = File::Spec->join( $apache_dir_debian , $args{name} );
+        say "Apache Site Config Dir Found.";
+
+        my $config_file = File::Spec->join( $apache_dir_debian , $args->{name} );
 
         if ( -e $config_file ) {
             say "$config_file exists, skipped.";
         } else {
-            say "Writing site config to $config_file";
+            say "Writing site config to $config_file.";
             open my $fh , ">", $config_file;
             print $fh $config_content;
             close $fh;
 
-            say "Enabling $args{name}";
-            system("a2ensite $args{name}");
+            say "Enabling $args->{name}";
+            system("a2ensite $args->{name}");
 
             say "Reloading apache";
             system("/etc/init.d/apache2 reload");
@@ -188,7 +174,7 @@ sub deploy {
     } 
     else {
         mkpath [ 'apache2' ];
-        my $config_file = File::Spec->join(  'apache2' , $args{name} . '.conf' );  # apache config
+        my $config_file = File::Spec->join(  'apache2' , $args->{name} . '.conf' );  # apache config
         open my $fh , ">", $config_file;
         print $fh $config_content;
         close $fh;
