@@ -89,8 +89,8 @@ sub preprocess_meta {
             $args->{site_dir} , $args->{webroot} );
 
     $args->{log_dir} ||= 
-               File::Spec->join( '/var/log/sites/' , $args->{name} , 'apache2' , 'logs' )
-            || File::Spec->join( $args->{sites_dir} , $args->{name} , 'apache2' , 'logs' );
+            File::Spec->join( $args->{sites_dir} , $args->{name} , 'apache2' , 'logs' );
+                # File::Spec->join( '/var/log/sites/' , $args->{name} , 'apache2' , 'logs' )
 
     $args->{access_log} ||= File::Spec->join( $args->{log_dir} , 'access.log' );
     $args->{error_log}  ||= File::Spec->join( $args->{log_dir} , 'error.log' );
@@ -99,10 +99,16 @@ sub preprocess_meta {
 
 sub prepare_paths {
     my ($self,$args) = @_;
-    for my $path ( qw(sites_dir site_dir log_dir document_root) ) {
+    for my $path ( qw(sites_dir site_dir document_root) ) {
         next unless $args->{ $path };
         mkpath [ $args->{ $path } ] unless -e $args->{ $path };
     }
+}
+
+sub prepare_log_path {
+    my ($self,$args) = @_;
+    mkpath [ $args->{log_dir} ] unless -e $args->{log_dir};
+
 }
 
 sub clean {
@@ -161,6 +167,8 @@ sub deploy {
 
     }
 
+    $self->prepare_log_path( $args );
+
     # Default template
     my $template = Apache::SiteConfig::Template->new;  # apache site config template
     my $context = $template->build( 
@@ -201,8 +209,10 @@ sub deploy {
         # TODO: run apache configtest here
         # /opt/local/apache2/bin/apachectl -t -f /path/to/config file
         my $config_file = File::Spec->join(  'apache2' , 'sites' , $args->{name} );  # apache config
+        mkpath [ File::Spec->join('apache2','sites') ];
+
         say "Writing site config file: $config_file";
-        open my $fh , ">", $config_file;
+        open my $fh , ">", $config_file or die "Can not write config file $config_file: $!";
         print $fh $config_content;
         close $fh;
     }
