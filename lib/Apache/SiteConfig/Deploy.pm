@@ -27,7 +27,7 @@ sub import {
 
     # setup accessors to main::
     no strict 'refs';
-    for my $key ( qw(name domain domain_alias webroot source deploy task) ) {
+    for my $key ( qw(su name domain domain_alias webroot source deploy task) ) {
         *{ 'main::' . $key } = sub { 
             ${ $class .'::'}{ $key }->( $Single , @_ );
         };
@@ -56,6 +56,7 @@ sub execute_command {
         $cmd = sprintf( 'sudo -u %s %s', $self->{args}->{su} , $cmd );
     }
 
+    say $cmd;
     if( $abort_on_failure ) {
         system( $cmd ) == 0 or die $!;
     } else {
@@ -133,7 +134,8 @@ sub prepare_log_path {
 sub clean {
     my $self = shift;
     my $args = $self->preprocess_meta;
-    rmtree( $args->{site_dir} , 1 );
+    say "Cleanning up $args->{site_dir}";
+    rmtree( $args->{site_dir} );
 }
 
 sub update {
@@ -145,10 +147,10 @@ sub update {
 
         if( $args->{source}->{git} ) {
             my $branch = $args->{source}->{branch} || 'master';
-            system("git pull origin $branch") if $branch eq 'master';
+            $self->execute_command("git pull origin $branch") if $branch eq 'master';
         } 
         elsif ( $args->{source}->{hg} ) {
-            system("hg pull -u");
+            $self->execute_command("hg pull -u");
         }
     }
 
@@ -166,22 +168,22 @@ sub deploy {
             last SKIP_SOURCE_CLONE if -e File::Spec->join( $args->{site_dir} , '.git' );
             say "Cloning git repository from $args->{source}->{git} to $args->{site_dir}";
 
-            system("git clone $args->{source}->{git} $args->{site_dir}") == 0 or die($?);
+            $self->execute_command("git clone $args->{source}->{git} $args->{site_dir}",1);
 
             # if branch is specified, then check the branch out.
             my $branch = $args->{source}->{branch};
-            system("git checkout -t origin/$branch") if $branch;
+            $self->execute_command("git checkout -t origin/$branch",1) if $branch;
 
             # if tag is specified, then check the tag out.
             my $tag = $args->{source}->{tag};
-            system("git checkout $tag -b $tag") if $tag;
+            $self->execute_command("git checkout $tag -b $tag",1) if $tag;
 
         }
         elsif( $args->{source}->{hg} ) {
             last SKIP_SOURCE_CLONE if -e File::Spec->join( $args->{site_dir} , '.git' );
 
             say "Cloning hg repository from $args->{source}->{hg} to $args->{site_dir}";
-            system("hg clone $args->{source}->{hg} $args->{site_dir}") == 0 or die($?);
+            $self->execute_command("hg clone $args->{source}->{hg} $args->{site_dir}") == 0 or die($?);
         }
 
     }
