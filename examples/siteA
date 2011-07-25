@@ -14,5 +14,3 @@ source git => 'git@git.foo.com:projectA.git';
 
 # relative web document path of repository
 webroot 'webroot/';
-
-deploy;

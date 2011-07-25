@@ -23,6 +23,15 @@ sub import {
     my ($class) = @_;
     $Single = $class->new;
     $Single->{args} = {};
+    $Single->{tasks} = {};
+
+    # built-in tasks
+    $Single->{tasks}->{deploy} = sub {
+        $Single->deploy( @_ );
+    };
+    $Single->{tasks}->{update} = sub {
+        $Single->update( @_ );
+    };
 
     # setup accessors to main::
     no strict 'refs';
@@ -36,8 +45,7 @@ sub import {
     return 1;
 }
 
-
-sub new {  bless {} , shift; }
+sub new { bless {} , shift; }
 
 sub execute_task {
     my ($self,$task_name,@args) = @_;
@@ -79,33 +87,60 @@ sub task ($&) {
     $self->{tasks}->{ $name } = $closure;
 }
 
+sub preprocess_meta {
+    my $self = shift;
+    my $args = { %{ $self->{args} } };  # copy args
+    $args->{sites_dir} ||= File::Spec->join( '/var/sites' );
+    $args->{site_dir} ||= File::Spec->join( $args->{sites_dir} , $args->{name} );
+    $args->{document_root} = File::Spec->join( 
+            $args->{site_dir} , $args->{webroot} );
+
+    $args->{log_dir} ||= File::Spec->join( $args->{sites_dir} , 
+        $args->{name} , 'apache2' , 'logs' );
+
+    $args->{access_log} ||= File::Spec->join( $args->{log_dir} , 'access.log' );
+    $args->{error_log}  ||= File::Spec->join( $args->{log_dir} , 'error.log' );
+    return $args;
+}
 
 
+sub prepare_paths {
+    my ($self,$args) = @_;
+    for my $path ( qw(sites_dir site_dir log_dir document_root) ) {
+        mkpath [ $args->{ $path } ] unless -e $args->{ $path };
+    }
+}
+
+sub update {
+    my $self = shift;
+
+
+}
 
 sub deploy {
     my ($self) = @_;
-    my %args = %{ $self->{args} };
-    
-#     for( $self->required ) {
-#         die "Key $_ is required." unless $args{$_};
-#     }
+
+    my $args = $self->preprocess_meta;
+    my %args = %$args;
+
+
+    $self->prepare_paths( $args );
+
+
+
 
     my $domain = $args{domain};
     my $domain_alias = $args{domain_alias};
-
     my $sites_dir = $args{sites_dir} || File::Spec->join( '/var/sites' );
-    mkpath [ $sites_dir ] unless -e $sites_dir;
-
     my $site_dir = File::Spec->join( $sites_dir , $args{name} );
 
     unless ( -e $site_dir ) {
-        mkpath [ $site_dir ] unless -e $site_dir ;
         if( $args{git} ) {
-            say "Cloning git repository from $args{git}";
+            say "Cloning git repository from $args{git} to $site_dir";
             system("git clone $args{git} $site_dir") == 0 or die($?);
         }
         elsif( $args{hg} ) {
-            say "Cloning hg repository from $args{hg}";
+            say "Cloning hg repository from $args{hg} to $site_dir";
             system("hg clone $args{hg} $site_dir") == 0 or die($?);
         }
     }
@@ -118,6 +153,7 @@ sub deploy {
 
     my $access_log = File::Spec->join( $log_dir , 'access.log' );
     my $error_log = File::Spec->join( $log_dir , 'error.log' );
+
 
     # Default template
     my $template = Apache::SiteConfig::Template->new;  # apache site config template
