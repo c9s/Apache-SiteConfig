@@ -49,6 +49,25 @@ sub execute_task {
     }
 }
 
+sub execute_command {
+    my ($self,$cmd, $abort_on_failure) = @_;
+
+    if( $self->{args}->{su} ) {
+        $cmd = sprintf( 'sudo -u %s %s', $self->{args}->{su} , $cmd );
+    }
+
+    if( $abort_on_failure ) {
+        system( $cmd ) == 0 or die $!;
+    } else {
+        system( $cmd );
+    }
+}
+
+sub su {
+    my $self = shift;
+    $self->{args}->{su} = $_[0];
+}
+
 sub name ($) { 
     my $self = shift;
     $self->{args}->{name} = $_[0];

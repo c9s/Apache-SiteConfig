@@ -43,6 +43,11 @@ The ruby rake style task:
 
     };
 
+    # define task without description
+    task 'clean' => sub {
+
+    };
+
 To run the task "something", you can run:
 
     perl Taskfile something
