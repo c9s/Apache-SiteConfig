@@ -6,14 +6,9 @@ use File::Spec;
 use File::Path qw(mkpath rmtree);
 use Apache::SiteConfig::Template;
 
-# require Exporter;
-# our @ISA = qw(Exporter);
-# our @EXPORT = qw(name domain domain_alias source webroot task);
+# TODO: support template variable for paths and meta data.
 
 our $Single;
-
-# has tasks => ( is => 'rw' , default => sub { +{  } } );
-
 
 END {
     $Single->execute_task( @ARGV ) if @ARGV;
@@ -26,12 +21,9 @@ sub import {
     $Single->{tasks} = {};
 
     # built-in tasks
-    $Single->{tasks}->{deploy} = sub {
-        $Single->deploy( @_ );
-    };
-    $Single->{tasks}->{update} = sub {
-        $Single->update( @_ );
-    };
+    $Single->{tasks}->{deploy} = sub { $Single->deploy( @_ ); };
+    $Single->{tasks}->{update} = sub { $Single->update( @_ ); };
+    $Single->{tasks}->{clean}  = sub { $Single->clean( @_ ); };
 
     # setup accessors to main::
     no strict 'refs';
@@ -74,7 +66,8 @@ sub domain_alias  {
 
 sub source  { 
     my ($self,$type,$uri) = @_;
-    $self->{args}->{ $type } = $uri;
+    $self->{args}->{source} ||= {};
+    $self->{args}->{source}->{ $type } = $uri;
 }
 
 sub webroot {
@@ -95,8 +88,9 @@ sub preprocess_meta {
     $args->{document_root} = File::Spec->join( 
             $args->{site_dir} , $args->{webroot} );
 
-    $args->{log_dir} ||= File::Spec->join( $args->{sites_dir} , 
-        $args->{name} , 'apache2' , 'logs' );
+    $args->{log_dir} ||= 
+               File::Spec->join( '/var/log/sites/' , $args->{name} , 'apache2' , 'logs' )
+            || File::Spec->join( $args->{sites_dir} , $args->{name} , 'apache2' , 'logs' );
 
     $args->{access_log} ||= File::Spec->join( $args->{log_dir} , 'access.log' );
     $args->{error_log}  ||= File::Spec->join( $args->{log_dir} , 'error.log' );
@@ -111,32 +105,60 @@ sub prepare_paths {
     }
 }
 
+sub clean {
+    my $self = shift;
+    my $args = $self->preprocess_meta;
+    rmtree( $args->{site_dir} , 1 );
+}
+
 sub update {
     my $self = shift;
+    my $args = $self->preprocess_meta;
 
+    if( $args->{source} ) {
+        chdir $args->{site_dir};
+
+        if( $args->{source}->{git} ) {
+            my $branch = $args->{source}->{branch} || 'master';
+            system("git pull origin $branch") if $branch eq 'master';
+        } 
+        elsif ( $args->{source}->{hg} ) {
+            system("hg pull -u");
+        }
+    }
 
 }
 
 sub deploy {
     my ($self) = @_;
-
     my $args = $self->preprocess_meta;
-    my %args = %$args;
-
     $self->prepare_paths( $args );
 
     SKIP_SOURCE_CLONE:
-    if( $args->{git} ) {
-        last SKIP_SOURCE_CLONE if -e File::Spec->join( $args->{site_dir} , '.git' );
+    if( $args->{source} ) {
 
-        say "Cloning git repository from $args->{git} to $args->{site_dir}";
-        system("git clone $args->{git} $args->{site_dir}") == 0 or die($?);
-    }
-    elsif( $args->{hg} ) {
-        last SKIP_SOURCE_CLONE if -e File::Spec->join( $args->{site_dir} , '.git' );
+        if( $args->{source}->{git} ) {
+            last SKIP_SOURCE_CLONE if -e File::Spec->join( $args->{site_dir} , '.git' );
+            say "Cloning git repository from $args->{source}->{git} to $args->{site_dir}";
 
-        say "Cloning hg repository from $args->{hg} to $args->{site_dir}";
-        system("hg clone $args->{hg} $args->{site_dir}") == 0 or die($?);
+            system("git clone $args->{source}->{git} $args->{site_dir}") == 0 or die($?);
+
+            # if branch is specified, then check the branch out.
+            my $branch = $args->{source}->{branch};
+            system("git checkout -t origin/$branch") if $branch;
+
+            # if tag is specified, then check the tag out.
+            my $tag = $args->{source}->{tag};
+            system("git checkout $tag -b $tag") if $tag;
+
+        }
+        elsif( $args->{source}->{hg} ) {
+            last SKIP_SOURCE_CLONE if -e File::Spec->join( $args->{site_dir} , '.git' );
+
+            say "Cloning hg repository from $args->{source}->{hg} to $args->{site_dir}";
+            system("hg clone $args->{source}->{hg} $args->{site_dir}") == 0 or die($?);
+        }
+
     }
 
     # Default template
@@ -174,7 +196,12 @@ sub deploy {
     } 
     else {
         mkpath [ 'apache2' ];
-        my $config_file = File::Spec->join(  'apache2' , $args->{name} . '.conf' );  # apache config
+
+
+        # TODO: run apache configtest here
+        # /opt/local/apache2/bin/apachectl -t -f /path/to/config file
+        my $config_file = File::Spec->join(  'apache2' , 'sites' , $args->{name} );  # apache config
+        say "Writing site config file: $config_file";
         open my $fh , ">", $config_file;
         print $fh $config_content;
         close $fh;
@@ -201,7 +228,13 @@ Apache::SiteConfig::Deploy
     domain_alias 'foo.com';
 
     source git => 'git@git.foo.com:projectA.git';
+
+    source 
+        git => 'git@git.foo.com:projectA.git',
+        branch => 'master';
+
     source hg  => 'http://.........';
+
 
     # relative web document path of repository
     webroot 'webroot/';
