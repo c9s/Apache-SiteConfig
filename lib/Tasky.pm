@@ -26,7 +26,6 @@ The ruby rake style task:
 
     use Tasky;
 
-
     meta name => 'your name',
          email => 'cornelius.howl@gmail.com',
          company => 'company name';
@@ -56,9 +55,24 @@ Tasky also provides tasky shell script, tasky will look for a file named C<Taskf
 
     tasky install
 
+
 =head1 DESCRIPTION
 
 This module ... 
+
+
+=head1 EXTENDING BUILTIN TASKS FOR YOUR TASK SCRIPTS
+
+if want to provide more tasks in your package, the following example shows how to do that:
+
+    TODO: some thoughts
+
+    use base qw(Tasky);
+
+    sub import {
+        Tasky->export_methods( qw(blah blah) );
+        Tasky->export_tasks( qw(blah blah) );
+    }
 
 =head1 IMPORT
 
